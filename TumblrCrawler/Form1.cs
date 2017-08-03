@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Net.Http;
 using System.IO;
 using HtmlAgilityPack;
+using System.Threading;
 
 namespace TumblrCrawler
 {
@@ -26,11 +27,22 @@ namespace TumblrCrawler
             webBrowser1.Visible = false;
             richTextBox1.Visible = true;
             TumblrSite();
-
+            List<string> listOfFiles = GetAllLinks(1, PageNums);         
+            TotalThreads = listOfFiles.Count();
+            int i = 1;
+            timer1.Enabled = true;
+            foreach (string item in listOfFiles)
+            {
+                Task.Factory.StartNew(() => DownloadMultiThreadAsync(item));
+                Thread.Sleep(2000);
+                richTextBox1.AppendText("Start thread " + i);
+                i++;
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            webBrowser1.ScriptErrorsSuppressed = true;
             webBrowser1.Navigate("https://www.tumblr.com/login");
         }
 
@@ -40,32 +52,27 @@ namespace TumblrCrawler
         public int ImgNumsPerPage { get; set; }
         public int SizeLimit { get; set; }
         public int CompleteThreadNums { get; set; }
+        public int CompleteImgNums { get; set; }
+        public int TotalThreads { get; set; }
+        public int TotalImgs { get; set; }
         public void TumblrSite()
         {
             CompleteThreadNums = 0;
+            CompleteImgNums = 0;
             SizeLimit = 0;
             //checkTumbUrl:
             //richTextBox1.AppendText("Please paste valid Url of Tumblrsite:");
             string homePage = textBox1.Text;
             string checkPattern = @"^http.+\.tumblr\.com/$";
             Regex checkRegex = new Regex(checkPattern);
-            //if (checkRegex.IsMatch(homePage))
-            //{
-
-            //}
-            //else
-            //{
-            //    richTextBox1.AppendText("It's not a Tumblr site!!! Try another one!");
-            //    goto checkTumbUrl;
-            //}
             HomePage = homePage;
             PageNums = CountNumOfPages();
-            richTextBox1.AppendText("This site have "+ PageNums + " page(s)!" );
+            richTextBox1.AppendText("This site have " + PageNums + " page(s)!\r\n");
             ImgNumsPerPage = CountImgNumsPerPage();
-            richTextBox1.AppendText("Each page have "+ ImgNumsPerPage + " image(s)!");
+            richTextBox1.AppendText("Each page have " + ImgNumsPerPage + " image(s)!\r\n");
             //richTextBox1.AppendText("Please set limit of image size (KBs):");
-            SizeLimit = 20 * 1024;
-            richTextBox1.AppendText("Size limit: "+SizeLimit);
+            SizeLimit = 50 * 1024;
+            richTextBox1.AppendText("Size limit: " + SizeLimit);
         }
         public async void DownloadImagesFromAllPagesAsync()
         {
@@ -81,10 +88,9 @@ namespace TumblrCrawler
             //Download each specific page of site:
             for (int pageNo = 1; pageNo <= PageNums; pageNo++)
             {
-                richTextBox1.AppendText("-------------- Starting download Page "+ pageNo + "--------------" );
+                richTextBox1.AppendText("-------------- Starting download Page " + pageNo + "--------------");
                 string childrenPageUrl = HomePage + "page/" + pageNo;
-                Task<string> htmlTask = RequestHtml(childrenPageUrl);
-                string html = htmlTask.Result;
+                string html = RequestHtml(childrenPageUrl);
                 List<string> linksOfChildrenPage = GetLink(html);
                 //Download each specific link of page:
                 foreach (var item in linksOfChildrenPage)
@@ -108,7 +114,7 @@ namespace TumblrCrawler
                         bw.Write(responseContent);
                         bw.Flush();
                         bw.Close();
-                        richTextBox1.AppendText(sequenceNo + "."+ fileType + " Download completed..."+ fileSize / 1024 + " KB(s)");
+                        richTextBox1.AppendText(sequenceNo + "." + fileType + " Download completed..." + fileSize / 1024 + " KB(s)");
                         sequenceNo++;
                         totalSize += Convert.ToInt64(fileSize);
                     }
@@ -136,8 +142,7 @@ namespace TumblrCrawler
             {
                 //richTextBox1.AppendText("-------------- Starting download Page {0} --------------", pageNo);
                 string childrenPageUrl = HomePage + "page/" + pageNo;
-                Task<string> htmlTask = RequestHtml(childrenPageUrl);
-                string html = htmlTask.Result;
+                string html = RequestHtml(childrenPageUrl);
                 List<string> linksOfChildrenPage = GetLink(html);
                 //Download each specific link of page:
                 foreach (var item in linksOfChildrenPage)
@@ -170,38 +175,38 @@ namespace TumblrCrawler
             //richTextBox1.AppendText("Download Complete. Total {0} image(s). Saved Location: {1}. Total size: {2} KB(s)", sequenceNo - 1, downloadFolder, totalSize / 1024);
         }
         //This method use for Multithreading purpose:
-        public async void DownloadMultiThreadAsync(int startPage, int endPage, int threadID)
+        public async void DownloadMultiThreadAsync(string listUrlOfImgs)
         {
-            richTextBox1.AppendText("Thread "+ threadID + " start ...\r\n");
             int sequenceNo = 1;
             long totalSize = 0;
+            //extract folder name
+            string threadNamePattern = @"\/Thread.+\.";
+            Regex threadNameRegex = new Regex(threadNamePattern);
+            Match threadNameMatch = threadNameRegex.Match(listUrlOfImgs);
+            string threadName = threadNameMatch.Value;
             //Create download folder:
             string siteNamePattern = @"[^\/]+\..+\..{3}";
             Regex siteNameRegex = new Regex(siteNamePattern);
             Match siteNameMatch = siteNameRegex.Match(HomePage);
             string siteName = siteNameMatch.Value;
-            string downloadFolder = "d:/ImageCrawler/" + siteName + "/(page " + startPage + "_" + endPage + ")";
+            string downloadFolder = "d:/ImageCrawler/" + siteName + "/image " + threadName;
             System.IO.Directory.CreateDirectory(downloadFolder);
-            //Download each specific page of site:
-            for (int pageNo = startPage; pageNo <= endPage; pageNo++)
+            //Download each specific link:
+            // Read the file and display it line by line.
+            string line;
+            using (System.IO.StreamReader linksFile = new System.IO.StreamReader(listUrlOfImgs))
             {
-                richTextBox1.AppendText("Thread--"+ threadID + "-------------- Starting download Page "+ pageNo + " --------------"+CompleteThreadNums+ " Thread(s) were completed\r\n");
-                string childrenPageUrl = HomePage + "page/" + pageNo;
-                Task<string> htmlTask = RequestHtml(childrenPageUrl);
-                string html = htmlTask.Result;
-                List<string> linksOfChildrenPage = GetLink(html);
-                //Download each specific link of page:
-                foreach (var item in linksOfChildrenPage)
+                while ((line = linksFile.ReadLine()) != null)
                 {
                     //Tim extension cua file anh
                     string fileTypePattern = "...$";
                     Regex fileTypeRegex = new Regex(fileTypePattern);
-                    Match fileTypeMatch = fileTypeRegex.Match(item);
+                    Match fileTypeMatch = fileTypeRegex.Match(line);
                     string fileType = fileTypeMatch.Value;
                     //Request image using it's URL
                     var client2 = new HttpClient();
                     var response = new HttpResponseMessage();
-                    response = await client2.GetAsync(item);
+                    response = await client2.GetAsync(line);
                     var responseContent = await response.Content.ReadAsByteArrayAsync();
                     var fileSize = response.Content.Headers.ContentLength;
                     //Save to disk
@@ -215,10 +220,52 @@ namespace TumblrCrawler
                         sequenceNo++;
                         totalSize += Convert.ToInt64(fileSize);
                     }
-                }
+                    CompleteImgNums++;
+                } 
             }
             CompleteThreadNums++;
-            richTextBox1.AppendText("(Thread "+threadID+ ")Download Complete. Total "+(sequenceNo - 1)+" image(s). Saved Location: "+ downloadFolder+". Total size: "+ totalSize / 1024 + " KB(s)\r\n" );
+        }
+        public List<string> GetAllLinks(int startPage, int endPage)
+        {
+            TotalImgs = 0;
+            int sequenceNo = 1;
+            long totalSize = 0;
+            List<string> listOfFiles = new List<string>();
+            //Create Mother folder:
+            string siteNamePattern = @"[^\/]+\..+\..{3}";
+            Regex siteNameRegex = new Regex(siteNamePattern);
+            Match siteNameMatch = siteNameRegex.Match(HomePage);
+            string siteName = siteNameMatch.Value;
+            string downloadFolder = "d:/ImageCrawler/" + siteName;
+            System.IO.Directory.CreateDirectory(downloadFolder);
+            //Dividing threads
+            List<int[]> listThread = SliceDownloadList(startPage, endPage);
+            int threadSeq = 0;
+            foreach (int[] item in listThread)
+            {
+                threadSeq++;
+                //Create each linksFile present for each Thread:
+                string fileName = downloadFolder + "/Thread " + threadSeq + ".txt";
+                using (File.Create(fileName)) { };
+                //Get links from each specific page of site:
+                for (int pageNo = item[0]; pageNo <= item[1]; pageNo++)
+                {
+                    labelStatus.Text = "Get links of page " + pageNo + "/" + endPage;
+                    string childrenPageUrl = HomePage + "page/" + pageNo;
+                    string html = RequestHtml(childrenPageUrl);
+                    List<string> linksOfChildrenPage = GetLink(html);
+                    foreach (string item2 in linksOfChildrenPage)
+                    {
+                        using (StreamWriter sw = File.CreateText(fileName))
+                        {
+                            sw.WriteLine(item2);
+                        }
+                        TotalImgs++;
+                    }
+                }
+                listOfFiles.Add(fileName);
+            }           
+            return listOfFiles;
         }
         private List<string> GetLink(string html)
         {
@@ -234,7 +281,9 @@ namespace TumblrCrawler
                 string src = node.Attributes["src"].Value;
                 string httppattern = "^http.+";
                 Regex httpregex = new Regex(httppattern);
-                if (httpregex.IsMatch(src))
+                string fileTypePattern = "...$";
+                Regex fileTypeRegex = new Regex(fileTypePattern);
+                if (httpregex.IsMatch(src)&&fileTypeRegex.IsMatch(src))
                 {
                     imageUrls.Add(src);
                     //richTextBox1.AppendText(src);
@@ -247,7 +296,12 @@ namespace TumblrCrawler
         {
             string html;
             webBrowser1.Navigate(pageAddress);
-
+            while (webBrowser1.ReadyState != WebBrowserReadyState.Complete)
+            {
+                Application.DoEvents();
+                Thread.Sleep(500);
+            }
+            html = webBrowser1.DocumentText;
             return html;
         }
         private int CountNumOfPages()
@@ -260,12 +314,12 @@ namespace TumblrCrawler
             while (endNum > startNum)
             {
                 //richTextBox1.AppendText("from {0} to {1}",startNum,endNum);
+                labelStatus.Text = startNum + " - " + endNum;
                 string childrenPageUrl = HomePage + "page/" + endNum;
-                Task<string> htmlTask = RequestHtml(childrenPageUrl);
-                string html = htmlTask.Result;
+                string html = RequestHtml(childrenPageUrl);
                 HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
                 doc.LoadHtml(html);
-                if (doc.DocumentNode.SelectNodes("//@class[@class='post photo']") == null && doc.DocumentNode.SelectNodes("//@class[@class='photoset']") == null && doc.DocumentNode.SelectNodes("//@class[@class='photo_wrap']") == null && doc.DocumentNode.SelectNodes("//@id[@id='photo']") == null)
+                if (doc.DocumentNode.SelectNodes("//@class[@class='post photo']") == null && doc.DocumentNode.SelectNodes("//@class[@class='photoset']") == null && doc.DocumentNode.SelectNodes("//@class[@class='photo_wrap']") == null && doc.DocumentNode.SelectNodes("//@id[@id='photo']") == null && doc.DocumentNode.SelectNodes("//@class[@class='post-photo']") == null)
                 {
                     if (endNum - startNum > 1)
                     {
@@ -297,10 +351,9 @@ namespace TumblrCrawler
         private int CountImgNumsPerPage()
         {
             richTextBox1.AppendText("Counting Number of Images per Page ...\r\n");
-            string firstPageUrl = HomePage + "page/1";
-            Task<string> htmlTask = RequestHtml(firstPageUrl);
-            string html = htmlTask.Result;
-            richTextBox1.AppendText(html);
+            string firstPageUrl = HomePage + "page/2";
+            string html = RequestHtml(firstPageUrl);
+            //richTextBox1.AppendText(html);
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
             doc.LoadHtml(html);
             List<HtmlNode> imageNodes = null;
@@ -318,7 +371,7 @@ namespace TumblrCrawler
             }
             return nodeNum;
         }
-        public List<int[]> SliceDownloadPages(int startPage, int endPage)
+        public List<int[]> SliceDownloadList(int startPage, int endPage)
         {
             int threadNums = 10;
             List<int[]> rangesSet = new List<int[]>();
@@ -368,6 +421,11 @@ namespace TumblrCrawler
             return rangesSet;
         }
 
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            labelStatus.Text = CompleteImgNums + "/" + TotalImgs + " Images completed.";
+            label2.Text = CompleteThreadNums + "/" + TotalThreads + " Threads completed!";
+        }
     }
 
 }
