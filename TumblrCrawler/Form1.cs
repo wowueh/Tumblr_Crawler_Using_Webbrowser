@@ -26,9 +26,20 @@ namespace TumblrCrawler
         {
             groupBoxOption.Enabled = false;
             buttonGet.Enabled = false;
+            textBox1.Enabled = false;
             richTextBox1.AppendText("Size limit: " + SizeLimit / 1024 + " KB(s)\r\n");
             richTextBox1.AppendText("Number of Threads: " + ThreadsNum + "\r\n");
-            List<string> listOfFiles = GetAllLinks(1, PageNums);
+            List<string> listOfFiles = new List<string>();
+            if (radioButtonAll.Checked==true)
+            {
+                listOfFiles = GetAllLinks(1, PageNums);
+                richTextBox1.AppendText("Download All Pages.\r\n");
+            }
+            if (radioButtonRangePages.Checked == true)
+            {
+                listOfFiles = GetAllLinks(Convert.ToInt32(comboBoxFrom.Text), Convert.ToInt32(comboBoxTo.Text));
+                richTextBox1.AppendText("Download from range pages: " + comboBoxFrom.Text +"-"+ comboBoxTo.Text+ "\r\n");
+            }
             TotalThreads = listOfFiles.Count();
             int i = 1;
             //timer1.Enabled = true;
@@ -78,12 +89,13 @@ namespace TumblrCrawler
             SizeLimit = Convert.ToInt32(comboBoxSize.Text) * 1024;
             ThreadsNum = Convert.ToInt32(comboBoxThread.Text);
             //Pass info to GroupBoxOption
-            comboBoxFrom.Text = "1";
             comboBoxTo.Text = Convert.ToString(PageNums);
+            comboBoxFrom.Text = "1";           
             //Enabling GroupBoxOption, buttonGet, buttonAnalyze
             groupBoxOption.Enabled = true;
             buttonGet.Enabled = true;
             buttonAnalyze.Enabled = true;
+            textBox1.Enabled = true;
         }
         public async void DownloadImagesFromAllPagesAsync()
         {
@@ -470,25 +482,43 @@ namespace TumblrCrawler
 
         private void comboBoxFrom_TextChanged(object sender, EventArgs e)
         {
-            if (Convert.ToInt32(comboBoxFrom.Text)> Convert.ToInt32(comboBoxTo.Text))
+            
+        }
+
+        private void comboBoxTo_TextChanged(object sender, EventArgs e)
+        {
+  
+        }
+
+        private void comboBoxFrom_Leave(object sender, EventArgs e)
+        {
+            if (comboBoxFrom.Text == null)
             {
-                comboBoxFrom.Text = comboBoxTo.Text;
+                comboBoxFrom.Text = "1";
             }
-            else if (Convert.ToInt32(comboBoxFrom.Text)<1)
+            if (Convert.ToInt32(comboBoxFrom.Text) < 1)
+            {
+                comboBoxFrom.Text = "1";
+            }
+            if (Convert.ToInt32(comboBoxFrom.Text) > Convert.ToInt32(comboBoxTo.Text))
             {
                 comboBoxFrom.Text = "1";
             }
         }
 
-        private void comboBoxTo_TextChanged(object sender, EventArgs e)
+        private void comboBoxTo_Leave(object sender, EventArgs e)
         {
-            if (Convert.ToInt32(comboBoxTo.Text)>PageNums)
+            if (comboBoxTo.Text==null)
             {
                 comboBoxTo.Text = Convert.ToString(PageNums);
             }
-            else if (Convert.ToInt32(comboBoxFrom.Text)< Convert.ToInt32(comboBoxTo.Text))
+            if (Convert.ToInt32(comboBoxTo.Text) < Convert.ToInt32(comboBoxFrom.Text))
             {
-                comboBoxTo.Text = comboBoxFrom.Text;
+                comboBoxTo.Text = Convert.ToString(PageNums);
+            }
+            if (Convert.ToInt32(comboBoxTo.Text) > PageNums)
+            {
+                comboBoxTo.Text = Convert.ToString(PageNums);
             }
         }
     }

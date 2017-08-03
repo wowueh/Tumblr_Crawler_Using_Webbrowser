@@ -41,15 +41,15 @@
             this.radioButtonAll = new System.Windows.Forms.RadioButton();
             this.radioButtonRangePages = new System.Windows.Forms.RadioButton();
             this.groupBoxOption = new System.Windows.Forms.GroupBox();
-            this.labelQuantity = new System.Windows.Forms.Label();
-            this.comboBoxFrom = new System.Windows.Forms.ComboBox();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            this.comboBoxTo = new System.Windows.Forms.ComboBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.comboBoxThread = new System.Windows.Forms.ComboBox();
             this.label6 = new System.Windows.Forms.Label();
             this.comboBoxSize = new System.Windows.Forms.ComboBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.comboBoxThread = new System.Windows.Forms.ComboBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.comboBoxTo = new System.Windows.Forms.ComboBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.comboBoxFrom = new System.Windows.Forms.ComboBox();
+            this.labelQuantity = new System.Windows.Forms.Label();
             this.buttonAnalyze = new System.Windows.Forms.Button();
             this.groupBoxOption.SuspendLayout();
             this.SuspendLayout();
@@ -182,56 +182,35 @@
             this.groupBoxOption.TabStop = false;
             this.groupBoxOption.Text = "Options:";
             // 
-            // labelQuantity
+            // label6
             // 
-            this.labelQuantity.AutoSize = true;
-            this.labelQuantity.Location = new System.Drawing.Point(6, 21);
-            this.labelQuantity.Name = "labelQuantity";
-            this.labelQuantity.Size = new System.Drawing.Size(49, 13);
-            this.labelQuantity.TabIndex = 12;
-            this.labelQuantity.Text = "Quantity:";
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(169, 45);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(102, 13);
+            this.label6.TabIndex = 20;
+            this.label6.Text = "Min Size Limit (KBs):";
             // 
-            // comboBoxFrom
+            // comboBoxSize
             // 
-            this.comboBoxFrom.FormattingEnabled = true;
-            this.comboBoxFrom.Location = new System.Drawing.Point(277, 15);
-            this.comboBoxFrom.Name = "comboBoxFrom";
-            this.comboBoxFrom.Size = new System.Drawing.Size(57, 21);
-            this.comboBoxFrom.TabIndex = 13;
-            this.comboBoxFrom.Text = "1";
-            this.comboBoxFrom.Visible = false;
-            this.comboBoxFrom.TextChanged += new System.EventHandler(this.comboBoxFrom_TextChanged);
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(238, 21);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(33, 13);
-            this.label3.TabIndex = 14;
-            this.label3.Text = "From:";
-            this.label3.Visible = false;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(340, 19);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(19, 13);
-            this.label4.TabIndex = 16;
-            this.label4.Text = "to:";
-            this.label4.Visible = false;
-            // 
-            // comboBoxTo
-            // 
-            this.comboBoxTo.FormattingEnabled = true;
-            this.comboBoxTo.Location = new System.Drawing.Point(365, 15);
-            this.comboBoxTo.Name = "comboBoxTo";
-            this.comboBoxTo.Size = new System.Drawing.Size(57, 21);
-            this.comboBoxTo.TabIndex = 15;
-            this.comboBoxTo.Text = "1";
-            this.comboBoxTo.Visible = false;
-            this.comboBoxTo.TextChanged += new System.EventHandler(this.comboBoxTo_TextChanged);
+            this.comboBoxSize.FormattingEnabled = true;
+            this.comboBoxSize.Items.AddRange(new object[] {
+            "0",
+            "10",
+            "20",
+            "30",
+            "40",
+            "50",
+            "60",
+            "70",
+            "80",
+            "90",
+            "100"});
+            this.comboBoxSize.Location = new System.Drawing.Point(277, 39);
+            this.comboBoxSize.Name = "comboBoxSize";
+            this.comboBoxSize.Size = new System.Drawing.Size(57, 21);
+            this.comboBoxSize.TabIndex = 19;
+            this.comboBoxSize.TextChanged += new System.EventHandler(this.comboBoxSize_TextChanged);
             // 
             // label5
             // 
@@ -264,35 +243,56 @@
             this.comboBoxThread.Size = new System.Drawing.Size(40, 21);
             this.comboBoxThread.TabIndex = 17;
             // 
-            // label6
+            // label4
             // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(169, 45);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(102, 13);
-            this.label6.TabIndex = 20;
-            this.label6.Text = "Min Size Limit (KBs):";
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(340, 19);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(19, 13);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "to:";
+            this.label4.Visible = false;
             // 
-            // comboBoxSize
+            // comboBoxTo
             // 
-            this.comboBoxSize.FormattingEnabled = true;
-            this.comboBoxSize.Items.AddRange(new object[] {
-            "0",
-            "10",
-            "20",
-            "30",
-            "40",
-            "50",
-            "60",
-            "70",
-            "80",
-            "90",
-            "100"});
-            this.comboBoxSize.Location = new System.Drawing.Point(277, 39);
-            this.comboBoxSize.Name = "comboBoxSize";
-            this.comboBoxSize.Size = new System.Drawing.Size(57, 21);
-            this.comboBoxSize.TabIndex = 19;
-            this.comboBoxSize.TextChanged += new System.EventHandler(this.comboBoxSize_TextChanged);
+            this.comboBoxTo.FormattingEnabled = true;
+            this.comboBoxTo.Location = new System.Drawing.Point(365, 15);
+            this.comboBoxTo.Name = "comboBoxTo";
+            this.comboBoxTo.Size = new System.Drawing.Size(57, 21);
+            this.comboBoxTo.TabIndex = 15;
+            this.comboBoxTo.Text = "1";
+            this.comboBoxTo.Visible = false;
+            this.comboBoxTo.Leave += new System.EventHandler(this.comboBoxTo_Leave);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(238, 21);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(33, 13);
+            this.label3.TabIndex = 14;
+            this.label3.Text = "From:";
+            this.label3.Visible = false;
+            // 
+            // comboBoxFrom
+            // 
+            this.comboBoxFrom.FormattingEnabled = true;
+            this.comboBoxFrom.Location = new System.Drawing.Point(277, 15);
+            this.comboBoxFrom.Name = "comboBoxFrom";
+            this.comboBoxFrom.Size = new System.Drawing.Size(57, 21);
+            this.comboBoxFrom.TabIndex = 13;
+            this.comboBoxFrom.Text = "1";
+            this.comboBoxFrom.Visible = false;
+            this.comboBoxFrom.Leave += new System.EventHandler(this.comboBoxFrom_Leave);
+            // 
+            // labelQuantity
+            // 
+            this.labelQuantity.AutoSize = true;
+            this.labelQuantity.Location = new System.Drawing.Point(6, 21);
+            this.labelQuantity.Name = "labelQuantity";
+            this.labelQuantity.Size = new System.Drawing.Size(49, 13);
+            this.labelQuantity.TabIndex = 12;
+            this.labelQuantity.Text = "Quantity:";
             // 
             // buttonAnalyze
             // 
