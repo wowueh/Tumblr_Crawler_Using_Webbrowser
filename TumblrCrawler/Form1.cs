@@ -24,29 +24,32 @@ namespace TumblrCrawler
 
         private void buttonGet_Click(object sender, EventArgs e)
         {
-            webBrowser1.Visible = false;
-            richTextBox1.Visible = true;
-            TumblrSite();
-            List<string> listOfFiles = GetAllLinks(1, PageNums);         
+            groupBoxOption.Enabled = false;
+            buttonGet.Enabled = false;
+            richTextBox1.AppendText("Size limit: " + SizeLimit / 1024 + " KB(s)\r\n");
+            richTextBox1.AppendText("Number of Threads: " + ThreadsNum + "\r\n");
+            List<string> listOfFiles = GetAllLinks(1, PageNums);
             TotalThreads = listOfFiles.Count();
             int i = 1;
-            timer1.Enabled = true;
-            foreach (string item in listOfFiles)
-            {
-                Task.Factory.StartNew(() => DownloadMultiThreadAsync(item));
-                Thread.Sleep(2000);
-                richTextBox1.AppendText("Start thread " + i);
-                i++;
-            }
+            //timer1.Enabled = true;
+            //foreach (string item in listOfFiles)
+            //{
+            //    Task.Factory.StartNew(() => DownloadMultiThreadAsync(item));
+            //    Thread.Sleep(2000);
+            //    richTextBox1.AppendText("Start thread " + i);
+            //    i++;
+            //}
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
             webBrowser1.ScriptErrorsSuppressed = true;
             webBrowser1.Navigate("https://www.tumblr.com/login");
+            Thread.CurrentThread.Name = "Main Thread";
+            comboBoxThread.SelectedIndex = 9;
+            comboBoxSize.SelectedIndex = 5;
+            
         }
-
-
         public string HomePage { get; set; }
         public int PageNums { get; set; }
         public int ImgNumsPerPage { get; set; }
@@ -55,24 +58,32 @@ namespace TumblrCrawler
         public int CompleteImgNums { get; set; }
         public int TotalThreads { get; set; }
         public int TotalImgs { get; set; }
-        public void TumblrSite()
+        public int ThreadsNum { get; set; }
+        public void AnalyzeSite()
         {
+            //Hide webbrowser, Unhide richTextBox, Hide UrlTextBox, hide buttonAnalyze
+            webBrowser1.Visible = false;
+            richTextBox1.Visible = true;
+            textBox1.Enabled = false;
+            buttonAnalyze.Enabled = false;
+            //Initialize Site info
             CompleteThreadNums = 0;
             CompleteImgNums = 0;
             SizeLimit = 0;
-            //checkTumbUrl:
-            //richTextBox1.AppendText("Please paste valid Url of Tumblrsite:");
-            string homePage = textBox1.Text;
-            string checkPattern = @"^http.+\.tumblr\.com/$";
-            Regex checkRegex = new Regex(checkPattern);
-            HomePage = homePage;
+            HomePage = textBox1.Text;
             PageNums = CountNumOfPages();
             richTextBox1.AppendText("This site have " + PageNums + " page(s)!\r\n");
             ImgNumsPerPage = CountImgNumsPerPage();
             richTextBox1.AppendText("Each page have " + ImgNumsPerPage + " image(s)!\r\n");
-            //richTextBox1.AppendText("Please set limit of image size (KBs):");
-            SizeLimit = 50 * 1024;
-            richTextBox1.AppendText("Size limit: " + SizeLimit);
+            SizeLimit = Convert.ToInt32(comboBoxSize.Text) * 1024;
+            ThreadsNum = Convert.ToInt32(comboBoxThread.Text);
+            //Pass info to GroupBoxOption
+            comboBoxFrom.Text = "1";
+            comboBoxTo.Text = Convert.ToString(PageNums);
+            //Enabling GroupBoxOption, buttonGet, buttonAnalyze
+            groupBoxOption.Enabled = true;
+            buttonGet.Enabled = true;
+            buttonAnalyze.Enabled = true;
         }
         public async void DownloadImagesFromAllPagesAsync()
         {
@@ -221,7 +232,7 @@ namespace TumblrCrawler
                         totalSize += Convert.ToInt64(fileSize);
                     }
                     CompleteImgNums++;
-                } 
+                }
             }
             CompleteThreadNums++;
         }
@@ -248,23 +259,26 @@ namespace TumblrCrawler
                 string fileName = downloadFolder + "/Thread " + threadSeq + ".txt";
                 using (File.Create(fileName)) { };
                 //Get links from each specific page of site:
-                for (int pageNo = item[0]; pageNo <= item[1]; pageNo++)
+                using (StreamWriter sw = File.CreateText(fileName))
                 {
-                    labelStatus.Text = "Get links of page " + pageNo + "/" + endPage;
-                    string childrenPageUrl = HomePage + "page/" + pageNo;
-                    string html = RequestHtml(childrenPageUrl);
-                    List<string> linksOfChildrenPage = GetLink(html);
-                    foreach (string item2 in linksOfChildrenPage)
+                    for (int pageNo = item[0]; pageNo <= item[1]; pageNo++)
                     {
-                        using (StreamWriter sw = File.CreateText(fileName))
+                        labelStatus.Text = "Get links of page " + pageNo + "/" + endPage;
+                        string childrenPageUrl = HomePage + "page/" + pageNo;
+                        string html = RequestHtml(childrenPageUrl);
+                        List<string> linksOfChildrenPage = GetLink(html);
+                        foreach (string item2 in linksOfChildrenPage)
                         {
+                            //using (StreamWriter sw = File.CreateText(fileName))
+                            //{
                             sw.WriteLine(item2);
+                            //}
+                            TotalImgs++;
                         }
-                        TotalImgs++;
                     }
                 }
                 listOfFiles.Add(fileName);
-            }           
+            }
             return listOfFiles;
         }
         private List<string> GetLink(string html)
@@ -283,7 +297,7 @@ namespace TumblrCrawler
                 Regex httpregex = new Regex(httppattern);
                 string fileTypePattern = "...$";
                 Regex fileTypeRegex = new Regex(fileTypePattern);
-                if (httpregex.IsMatch(src)&&fileTypeRegex.IsMatch(src))
+                if (httpregex.IsMatch(src) && fileTypeRegex.IsMatch(src))
                 {
                     imageUrls.Add(src);
                     //richTextBox1.AppendText(src);
@@ -373,10 +387,9 @@ namespace TumblrCrawler
         }
         public List<int[]> SliceDownloadList(int startPage, int endPage)
         {
-            int threadNums = 10;
             List<int[]> rangesSet = new List<int[]>();
             int range = endPage - startPage + 1;
-            if (range <= threadNums)
+            if (range <= ThreadsNum)
             {
                 for (int i = 1; i <= range; i++)
                 {
@@ -386,12 +399,12 @@ namespace TumblrCrawler
             }
             else
             {
-                int step = range / threadNums;
-                int check = range % threadNums;
+                int step = range / ThreadsNum;
+                int check = range % ThreadsNum;
                 if (check == 0)
                 {
                     int temp = startPage;
-                    for (int i = 1; i <= threadNums; i++)
+                    for (int i = 1; i <= ThreadsNum; i++)
                     {
                         int[] j = new int[2] { temp, temp + step - 1 };
                         rangesSet.Add(j);
@@ -401,7 +414,7 @@ namespace TumblrCrawler
                 else
                 {
                     int temp = startPage;
-                    for (int i = 1; i <= threadNums; i++)
+                    for (int i = 1; i <= ThreadsNum; i++)
                     {
                         if (temp + step - 1 <= endPage)
                         {
@@ -425,6 +438,58 @@ namespace TumblrCrawler
         {
             labelStatus.Text = CompleteImgNums + "/" + TotalImgs + " Images completed.";
             label2.Text = CompleteThreadNums + "/" + TotalThreads + " Threads completed!";
+        }
+
+        private void radioButtonAll_CheckedChanged(object sender, EventArgs e)
+        {
+            if (radioButtonAll.Checked == true)
+            {
+                comboBoxFrom.Visible = false;
+                comboBoxTo.Visible = false;
+                label3.Visible = false;
+                label4.Visible = false;
+            }
+            else if(radioButtonAll.Checked == false)
+            {
+                comboBoxFrom.Visible = true;
+                comboBoxTo.Visible = true;
+                label3.Visible = true;
+                label4.Visible = true;
+            }
+        }
+
+        private void buttonAnalyze_Click(object sender, EventArgs e)
+        {
+            AnalyzeSite();
+        }
+
+        private void comboBoxSize_TextChanged(object sender, EventArgs e)
+        {
+            SizeLimit = Convert.ToInt32(comboBoxSize.Text) * 1024;
+        }
+
+        private void comboBoxFrom_TextChanged(object sender, EventArgs e)
+        {
+            if (Convert.ToInt32(comboBoxFrom.Text)> Convert.ToInt32(comboBoxTo.Text))
+            {
+                comboBoxFrom.Text = comboBoxTo.Text;
+            }
+            else if (Convert.ToInt32(comboBoxFrom.Text)<1)
+            {
+                comboBoxFrom.Text = "1";
+            }
+        }
+
+        private void comboBoxTo_TextChanged(object sender, EventArgs e)
+        {
+            if (Convert.ToInt32(comboBoxTo.Text)>PageNums)
+            {
+                comboBoxTo.Text = Convert.ToString(PageNums);
+            }
+            else if (Convert.ToInt32(comboBoxFrom.Text)< Convert.ToInt32(comboBoxTo.Text))
+            {
+                comboBoxTo.Text = comboBoxFrom.Text;
+            }
         }
     }
 
