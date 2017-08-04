@@ -17,59 +17,23 @@ namespace TumblrCrawler
 {
     public partial class Form1 : Form
     {
-        public Form1()
-        {
-            InitializeComponent();
-        }
-
-        private void buttonGet_Click(object sender, EventArgs e)
-        {
-            groupBoxOption.Enabled = false;
-            buttonGet.Enabled = false;
-            textBox1.Enabled = false;
-            richTextBox1.AppendText("Size limit: " + SizeLimit / 1024 + " KB(s)\r\n");
-            richTextBox1.AppendText("Number of Threads: " + ThreadsNum + "\r\n");
-            List<string> listOfFiles = new List<string>();
-            if (radioButtonAll.Checked==true)
-            {
-                listOfFiles = GetAllLinks(1, PageNums);
-                richTextBox1.AppendText("Download All Pages.\r\n");
-            }
-            if (radioButtonRangePages.Checked == true)
-            {
-                listOfFiles = GetAllLinks(Convert.ToInt32(comboBoxFrom.Text), Convert.ToInt32(comboBoxTo.Text));
-                richTextBox1.AppendText("Download from range pages: " + comboBoxFrom.Text +"-"+ comboBoxTo.Text+ "\r\n");
-            }
-            TotalThreads = listOfFiles.Count();
-            int i = 1;
-            //timer1.Enabled = true;
-            //foreach (string item in listOfFiles)
-            //{
-            //    Task.Factory.StartNew(() => DownloadMultiThreadAsync(item));
-            //    Thread.Sleep(2000);
-            //    richTextBox1.AppendText("Start thread " + i);
-            //    i++;
-            //}
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            webBrowser1.ScriptErrorsSuppressed = true;
-            webBrowser1.Navigate("https://www.tumblr.com/login");
-            Thread.CurrentThread.Name = "Main Thread";
-            comboBoxThread.SelectedIndex = 9;
-            comboBoxSize.SelectedIndex = 5;
-            
-        }
+        List<string> listOfFiles = new List<string>();//list of Thread files
         public string HomePage { get; set; }
         public int PageNums { get; set; }
         public int ImgNumsPerPage { get; set; }
         public int SizeLimit { get; set; }
         public int CompleteThreadNums { get; set; }
         public int CompleteImgNums { get; set; }
-        public int TotalThreads { get; set; }
+        public int CompletePageNums { get; set; }
+        public int realThreadsNum { get; set; }//real download Thread
         public int TotalImgs { get; set; }
-        public int ThreadsNum { get; set; }
+        public int ThreadsNum { get; set; }//declared Thread
+        public string FilePath { get; set; }// use to load exist local file
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
         public void AnalyzeSite()
         {
             //Hide webbrowser, Unhide richTextBox, Hide UrlTextBox, hide buttonAnalyze
@@ -80,14 +44,13 @@ namespace TumblrCrawler
             //Initialize Site info
             CompleteThreadNums = 0;
             CompleteImgNums = 0;
+            CompletePageNums = 0;
             SizeLimit = 0;
             HomePage = textBox1.Text;
             PageNums = CountNumOfPages();
             richTextBox1.AppendText("This site have " + PageNums + " page(s)!\r\n");
             ImgNumsPerPage = CountImgNumsPerPage();
             richTextBox1.AppendText("Each page have " + ImgNumsPerPage + " image(s)!\r\n");
-            SizeLimit = Convert.ToInt32(comboBoxSize.Text) * 1024;
-            ThreadsNum = Convert.ToInt32(comboBoxThread.Text);
             //Pass info to GroupBoxOption
             comboBoxTo.Text = Convert.ToString(PageNums);
             comboBoxFrom.Text = "1";           
@@ -198,28 +161,29 @@ namespace TumblrCrawler
             //richTextBox1.AppendText("Download Complete. Total {0} image(s). Saved Location: {1}. Total size: {2} KB(s)", sequenceNo - 1, downloadFolder, totalSize / 1024);
         }
         //This method use for Multithreading purpose:
-        public async void DownloadMultiThreadAsync(string listUrlOfImgs)
+        public async void DownloadMultiThreadAsync(string filePath)
         {
             int sequenceNo = 1;
             long totalSize = 0;
-            //extract folder name
+            //filter to find folder name
             string threadNamePattern = @"\/Thread.+\.";
             Regex threadNameRegex = new Regex(threadNamePattern);
-            Match threadNameMatch = threadNameRegex.Match(listUrlOfImgs);
+            Match threadNameMatch = threadNameRegex.Match(filePath);
             string threadName = threadNameMatch.Value;
-            //Create download folder:
+            //Find Sitename:
             string siteNamePattern = @"[^\/]+\..+\..{3}";
             Regex siteNameRegex = new Regex(siteNamePattern);
             Match siteNameMatch = siteNameRegex.Match(HomePage);
             string siteName = siteNameMatch.Value;
+            //Create download folder:
             string downloadFolder = "d:/ImageCrawler/" + siteName + "/image " + threadName;
             System.IO.Directory.CreateDirectory(downloadFolder);
             //Download each specific link:
-            // Read the file and display it line by line.
+            // Read the file and download it line by line.
             string line;
-            using (System.IO.StreamReader linksFile = new System.IO.StreamReader(listUrlOfImgs))
+            using (System.IO.StreamReader f = new System.IO.StreamReader(filePath))
             {
-                while ((line = linksFile.ReadLine()) != null)
+                while ((line = f.ReadLine()) != null)
                 {
                     //Tim extension cua file anh
                     string fileTypePattern = "...$";
@@ -377,13 +341,21 @@ namespace TumblrCrawler
         private int CountImgNumsPerPage()
         {
             richTextBox1.AppendText("Counting Number of Images per Page ...\r\n");
-            string firstPageUrl = HomePage + "page/2";
+            string firstPageUrl = HomePage;
             string html = RequestHtml(firstPageUrl);
             //richTextBox1.AppendText(html);
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
             doc.LoadHtml(html);
             List<HtmlNode> imageNodes = null;
-            imageNodes = doc.DocumentNode.SelectNodes("//img[@src]").ToList();
+            try
+            {
+                imageNodes = doc.DocumentNode.SelectNodes("//img[@src]").ToList();
+            }
+            catch (ArgumentNullException)
+            {
+                richTextBox1.AppendText("Check your internet connection!\r\n");
+                //throw;
+            }
             int nodeNum = 0;
             foreach (var item in imageNodes)
             {
@@ -446,10 +418,59 @@ namespace TumblrCrawler
             return rangesSet;
         }
 
+        private void buttonGet_Click(object sender, EventArgs e)
+        {
+            groupBoxOption.Enabled = false;
+            buttonGet.Enabled = false;
+            textBox1.Enabled = false;
+            //Set Size, threadNum
+            SizeLimit = Convert.ToInt32(comboBoxSize.Text) * 1024;
+            ThreadsNum = Convert.ToInt32(comboBoxThread.Text);
+            richTextBox1.AppendText("Size limit: " + SizeLimit / 1024 + " KB(s)\r\n");
+            richTextBox1.AppendText("Number of Threads: " + ThreadsNum + "\r\n");
+            //Getlinks           
+            if (radioButtonAll.Checked == true)
+            {
+                listOfFiles = GetAllLinks(1, PageNums);
+                richTextBox1.AppendText("Download All Pages.\r\n");
+            }
+            if (radioButtonRangePages.Checked == true)
+            {
+                listOfFiles = GetAllLinks(Convert.ToInt32(comboBoxFrom.Text), Convert.ToInt32(comboBoxTo.Text));
+                richTextBox1.AppendText("Download from range pages: " + comboBoxFrom.Text + "-" + comboBoxTo.Text + "\r\n");
+            }
+            realThreadsNum = listOfFiles.Count();
+            richTextBox1.AppendText("Ready to download!\r\n");
+            buttonDownload.Enabled = true;
+        }
+
+        private void buttonDownload_Click(object sender, EventArgs e)
+        {
+            int i = 1;
+            timer1.Enabled = true;
+            foreach (string item in listOfFiles)
+            {
+                Task.Factory.StartNew(() => DownloadMultiThreadAsync(item));
+                Thread.Sleep(1000);
+                richTextBox1.AppendText("Start download thread: " + i);
+                i++;
+            }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            webBrowser1.ScriptErrorsSuppressed = true;
+            webBrowser1.Navigate("https://www.tumblr.com/login");
+            Thread.CurrentThread.Name = "Main Thread";
+            comboBoxThread.SelectedIndex = 9;
+            comboBoxSize.SelectedIndex = 5;
+            buttonDownload.Enabled = false;
+        }
+
         private void timer1_Tick(object sender, EventArgs e)
         {
             labelStatus.Text = CompleteImgNums + "/" + TotalImgs + " Images completed.";
-            label2.Text = CompleteThreadNums + "/" + TotalThreads + " Threads completed!";
+            label2.Text = CompleteThreadNums + "/" + realThreadsNum + " Threads completed!";
         }
 
         private void radioButtonAll_CheckedChanged(object sender, EventArgs e)
@@ -521,6 +542,30 @@ namespace TumblrCrawler
                 comboBoxTo.Text = Convert.ToString(PageNums);
             }
         }
-    }
 
+        private void buttonOpen_Click(object sender, EventArgs e)
+        {
+            webBrowser1.Visible = false;
+            richTextBox1.Visible = true;
+            DialogResult result = openFileDialog1.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                FilePath = openFileDialog1.FileName;
+                HomePage = textBox1.Text;
+                TotalImgs = File.ReadLines(FilePath).Count();
+                realThreadsNum = 1;
+                richTextBox1.AppendText("File opened: "+FilePath+"\r\n");
+                buttonDownloadFromFile.Enabled = true;
+            }
+        }
+
+        private void buttonDownloadFromFile_Click(object sender, EventArgs e)
+        {
+            timer1.Enabled = true;
+            buttonAnalyze.Enabled = false;
+            buttonOpen.Enabled = false;
+            buttonDownloadFromFile.Enabled = false;
+            DownloadMultiThreadAsync(FilePath);
+        }
+    }
 }

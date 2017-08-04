@@ -51,6 +51,10 @@
             this.comboBoxFrom = new System.Windows.Forms.ComboBox();
             this.labelQuantity = new System.Windows.Forms.Label();
             this.buttonAnalyze = new System.Windows.Forms.Button();
+            this.buttonDownload = new System.Windows.Forms.Button();
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.buttonOpen = new System.Windows.Forms.Button();
+            this.buttonDownloadFromFile = new System.Windows.Forms.Button();
             this.groupBoxOption.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -304,11 +308,49 @@
             this.buttonAnalyze.UseVisualStyleBackColor = true;
             this.buttonAnalyze.Click += new System.EventHandler(this.buttonAnalyze_Click);
             // 
+            // buttonDownload
+            // 
+            this.buttonDownload.Location = new System.Drawing.Point(444, 37);
+            this.buttonDownload.Name = "buttonDownload";
+            this.buttonDownload.Size = new System.Drawing.Size(91, 27);
+            this.buttonDownload.TabIndex = 14;
+            this.buttonDownload.Text = "Download";
+            this.buttonDownload.UseVisualStyleBackColor = true;
+            this.buttonDownload.Click += new System.EventHandler(this.buttonDownload_Click);
+            // 
+            // openFileDialog1
+            // 
+            this.openFileDialog1.FileName = "openFileDialog1";
+            // 
+            // buttonOpen
+            // 
+            this.buttonOpen.Location = new System.Drawing.Point(444, 73);
+            this.buttonOpen.Name = "buttonOpen";
+            this.buttonOpen.Size = new System.Drawing.Size(55, 28);
+            this.buttonOpen.TabIndex = 15;
+            this.buttonOpen.Text = "Open ...";
+            this.buttonOpen.UseVisualStyleBackColor = true;
+            this.buttonOpen.Click += new System.EventHandler(this.buttonOpen_Click);
+            // 
+            // buttonDownloadFromFile
+            // 
+            this.buttonDownloadFromFile.Enabled = false;
+            this.buttonDownloadFromFile.Location = new System.Drawing.Point(505, 73);
+            this.buttonDownloadFromFile.Name = "buttonDownloadFromFile";
+            this.buttonDownloadFromFile.Size = new System.Drawing.Size(30, 28);
+            this.buttonDownloadFromFile.TabIndex = 16;
+            this.buttonDownloadFromFile.Text = ">>";
+            this.buttonDownloadFromFile.UseVisualStyleBackColor = true;
+            this.buttonDownloadFromFile.Click += new System.EventHandler(this.buttonDownloadFromFile_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(547, 455);
+            this.Controls.Add(this.buttonDownloadFromFile);
+            this.Controls.Add(this.buttonOpen);
+            this.Controls.Add(this.buttonDownload);
             this.Controls.Add(this.buttonAnalyze);
             this.Controls.Add(this.groupBoxOption);
             this.Controls.Add(this.label2);
@@ -354,6 +396,10 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.ComboBox comboBoxThread;
         private System.Windows.Forms.Button buttonAnalyze;
+        private System.Windows.Forms.Button buttonDownload;
+        private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.Button buttonOpen;
+        private System.Windows.Forms.Button buttonDownloadFromFile;
     }
 }
 
