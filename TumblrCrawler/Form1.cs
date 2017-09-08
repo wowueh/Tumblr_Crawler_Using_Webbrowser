@@ -15,7 +15,7 @@ using System.Threading;
 
 namespace TumblrCrawler
 {
-    public partial class Form1 : Form
+    public partial class TumblrCrawler : Form
     {
         List<string> listOfFiles = new List<string>();//list of Thread files
         public string HomePage { get; set; }
@@ -30,7 +30,7 @@ namespace TumblrCrawler
         public int ThreadsNum { get; set; }//declared Thread
         public string FilePath { get; set; }// use to load exist local file
 
-        public Form1()
+        public TumblrCrawler()
         {
             InitializeComponent();
         }
@@ -166,7 +166,7 @@ namespace TumblrCrawler
             int sequenceNo = 1;
             long totalSize = 0;
             //filter to find folder name
-            string threadNamePattern = @"\/Thread.+\.";
+            string threadNamePattern = @"Thread[^\.]+";
             Regex threadNameRegex = new Regex(threadNamePattern);
             Match threadNameMatch = threadNameRegex.Match(filePath);
             string threadName = threadNameMatch.Value;
@@ -309,7 +309,7 @@ namespace TumblrCrawler
                 string html = RequestHtml(childrenPageUrl);
                 HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
                 doc.LoadHtml(html);
-                if (doc.DocumentNode.SelectNodes("//@class[@class='post photo']") == null && doc.DocumentNode.SelectNodes("//@class[@class='photoset']") == null && doc.DocumentNode.SelectNodes("//@class[@class='photo_wrap']") == null && doc.DocumentNode.SelectNodes("//@id[@id='photo']") == null && doc.DocumentNode.SelectNodes("//@class[@class='post-photo']") == null)
+                if (doc.DocumentNode.SelectNodes("//@class[@class='post photo']") == null && doc.DocumentNode.SelectNodes("//@class[@class='photoset']") == null && doc.DocumentNode.SelectNodes("//@class[@class='photo_wrap']") == null && doc.DocumentNode.SelectNodes("//@id[@id='photo']") == null && doc.DocumentNode.SelectNodes("//@class[@class='post-photo']") == null && doc.DocumentNode.SelectNodes("//@class[@class='post']") == null)
                 {
                     if (endNum - startNum > 1)
                     {
@@ -452,7 +452,7 @@ namespace TumblrCrawler
             {
                 Task.Factory.StartNew(() => DownloadMultiThreadAsync(item));
                 Thread.Sleep(1000);
-                richTextBox1.AppendText("Start download thread: " + i);
+                richTextBox1.AppendText("Start download thread: " + i + "\r\n");
                 i++;
             }
         }
@@ -469,8 +469,14 @@ namespace TumblrCrawler
 
         private void timer1_Tick(object sender, EventArgs e)
         {
+            //update Downloading process
             labelStatus.Text = CompleteImgNums + "/" + TotalImgs + " Images completed.";
             label2.Text = CompleteThreadNums + "/" + realThreadsNum + " Threads completed!";
+            //Check whether all downloading process complete
+            if (CompleteImgNums==TotalImgs&&TotalImgs>0)
+            {
+                richTextBox1.AppendText("Downloading Process completed.\r\n");
+            }
         }
 
         private void radioButtonAll_CheckedChanged(object sender, EventArgs e)

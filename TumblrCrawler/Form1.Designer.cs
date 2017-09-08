@@ -1,6 +1,6 @@
 ﻿namespace TumblrCrawler
 {
-    partial class Form1
+    partial class TumblrCrawler
     {
         /// <summary>
         /// Required designer variable.
@@ -71,7 +71,7 @@
             // 
             this.textBox1.Location = new System.Drawing.Point(47, 2);
             this.textBox1.Name = "textBox1";
-            this.textBox1.PasswordChar = '*';
+            this.textBox1.PasswordChar = 'X';
             this.textBox1.Size = new System.Drawing.Size(284, 20);
             this.textBox1.TabIndex = 1;
             this.textBox1.Text = "https://boricuasamurai2.tumblr.com/";
@@ -102,7 +102,7 @@
             this.buttonGet.Name = "buttonGet";
             this.buttonGet.Size = new System.Drawing.Size(101, 23);
             this.buttonGet.TabIndex = 4;
-            this.buttonGet.Text = "Get";
+            this.buttonGet.Text = "Get links";
             this.buttonGet.UseVisualStyleBackColor = true;
             this.buttonGet.Click += new System.EventHandler(this.buttonGet_Click);
             // 
@@ -343,10 +343,11 @@
             this.buttonDownloadFromFile.UseVisualStyleBackColor = true;
             this.buttonDownloadFromFile.Click += new System.EventHandler(this.buttonDownloadFromFile_Click);
             // 
-            // Form1
+            // TumblrCrawler
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(547, 455);
             this.Controls.Add(this.buttonDownloadFromFile);
             this.Controls.Add(this.buttonOpen);
@@ -361,8 +362,9 @@
             this.Controls.Add(this.webBrowser1);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.labelUrl);
-            this.Name = "Form1";
-            this.Text = "Form1";
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
+            this.Name = "TumblrCrawler";
+            this.Text = "TumblrCrawler";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBoxOption.ResumeLayout(false);
             this.groupBoxOption.PerformLayout();
